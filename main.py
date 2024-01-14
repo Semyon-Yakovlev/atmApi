@@ -9,9 +9,6 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-def preprocess(data):
-    data["col"] = 1
-    return data
 
 class Pred(BaseModel):
     id_user: int
@@ -31,18 +28,23 @@ class MethodsType(str, Enum):
     feedback = "feedback"
 
 
+def preprocess(data):
+    data["col"] = 1
+    return data
+
+
 model = load("model.h5")
 
 
 @app.get("/help")
-def Help():
+def get_help():
     data = {"methods": ["predict", "predict_items", "history", "feedback"]}
     df = DataFrame(data)
     return df.to_dict(orient="records")
 
 
 @app.post("/methods")
-def Methods(like: MethodsType):
+def methods(like: MethodsType):
     data = {
         "methods": ["predict", "predict_items", "history", "feedback"],
         "description": [
@@ -61,7 +63,7 @@ def Methods(like: MethodsType):
 
 
 @app.post("/predict")
-def Predict(pred_body: Pred):
+def predict(pred_body: Pred):
     data = DataFrame([pred_body.dict()])
     data = data.drop(columns=["id_user"])
     data = preprocess(data)
@@ -81,7 +83,7 @@ def Predict(pred_body: Pred):
 
 
 @app.post("/predict_items")
-async def Predict_items_csv(file: UploadFile):
+async def predict_items_csv(file: UploadFile):
     content = await file.read()
     df = read_csv(StringIO(content.decode("utf-8")), sep=",")
     X_test = preprocess(df)
@@ -91,13 +93,13 @@ async def Predict_items_csv(file: UploadFile):
 
 
 @app.get("/history/{id}")
-def Show_history(id: int):
+def show_history(id_user: int):
     data = read_csv("predictions.csv")
-    return data[data["id_user"] == id].to_dict(orient="records")
+    return data[data["id_user"] == id_user].to_dict(orient="records")
 
 
 @app.post("/feedback")
-def Save_feedback(feedback_body: Feedback):
+def save_feedback(feedback_body: Feedback):
     data = read_csv("feedback.csv")
     new_row = {"id_user": feedback_body.id_user, "feedback": feedback_body.feedback}
     data = concat([data, DataFrame([new_row])], ignore_index=True)
