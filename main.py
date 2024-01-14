@@ -4,7 +4,7 @@ from io import StringIO
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
 from joblib import load
-from pandas import DataFrame, read_csv
+from pandas import DataFrame, read_csv, concat
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -73,7 +73,7 @@ def Predict(pred_body: Pred):
         "predict": pred[0],
     }
     data = read_csv("predictions.csv")
-    data = data.append(new_row, ignore_index=True)
+    data = concat([data, DataFrame([new_row])], ignore_index=True)
     data[["id_user", "lat", "long", "predict"]].to_csv(
         "predictions.csv", index=False
     )
@@ -100,6 +100,6 @@ def Show_history(id: int):
 def Save_feedback(feedback_body: Feedback):
     data = read_csv("feedback.csv")
     new_row = {"id_user": feedback_body.id_user, "feedback": feedback_body.feedback}
-    data = data.append(new_row, ignore_index=True)
+    data = concat([data, DataFrame([new_row])], ignore_index=True)
     data.to_csv("feedback.csv", index=False)
     return "Спасибо за отзыв"
