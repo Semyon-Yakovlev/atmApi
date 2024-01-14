@@ -108,7 +108,7 @@ def predict_batch(pred_body: PredBatch):
 @app.get("/history/{id_user}")
 def show_history(id_user: int):
     data = read_csv("predictions.csv")
-    return data[data["id_user"] == id_user].to_dict(orient="records")
+    return data[data["id_user"] == id_user].tail(20).to_dict(orient="records")
 
 
 @app.post("/feedback")
