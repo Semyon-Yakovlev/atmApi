@@ -83,13 +83,17 @@ def predict(pred_body: Pred):
 
 
 @app.post("/predict_items")
-async def predict_items_csv(file: UploadFile):
-    content = await file.read()
-    df = read_csv(StringIO(content.decode("utf-8")), sep=",")
-    X_test = preprocess(df)
-    pred = model.predict(X_test)
-    df["pred"] = pred
-    return df[["lat", "long", "pred"]].to_dict(orient="records")
+def predict_batch(pred_body: Pred):
+    data = DataFrame([pred_body.dict()])
+    model_data = preprocess(data.drop(columns=["id_user"]))
+    pred = model.predict(data)
+    data['prediction'] = pred
+    data_old = read_csv("predictions.csv")
+    data = concat([data_old, data], ignore_index=True)
+    data[["id_user", "lat", "long", "predict"]].to_csv(
+        "predictions.csv", index=False
+    )
+    return data[['lat', 'long', 'prediction']].to_dict()
 
 
 @app.get("/history/{id}")
