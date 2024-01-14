@@ -91,10 +91,17 @@ def predict(pred_body: Pred):
 
 @app.post("/predict_batch")
 def predict_batch(pred_body: PredBatch):
-    data = DataFrame([pred_body.dict()])
+    data = DataFrame(pred_body.dict())
+    print(data)
     model_data = preprocess(data.drop(columns=["id_user"]))
     pred = model.predict(model_data)
     data['prediction'] = pred
+
+    old_data = read_csv("predictions.csv")
+    new_data = concat([old_data, data], ignore_index=True)
+    new_data[["id_user", "lat", "long", "predict"]].to_csv(
+        "predictions.csv", index=False
+    )
     return data[['lat', 'long', 'prediction']].to_dict(orient='list')
 
 
