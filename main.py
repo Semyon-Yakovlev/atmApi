@@ -93,7 +93,6 @@ def predict(pred_body: Pred):
 @app.post("/predict_batch")
 def predict_batch(pred_body: PredBatch):
     data = DataFrame(pred_body.dict())
-    print(data)
     model_data = preprocess(data.drop(columns=["id_user"]))
     pred = model.predict(model_data)
     data['prediction'] = pred
@@ -106,7 +105,7 @@ def predict_batch(pred_body: PredBatch):
     return data[['lat', 'long', 'prediction']].to_dict(orient='records')
 
 
-@app.get("/history/{id}")
+@app.get("/history/{id_user}")
 def show_history(id_user: int):
     data = read_csv("predictions.csv")
     return data[data["id_user"] == id_user].to_dict(orient="records")
