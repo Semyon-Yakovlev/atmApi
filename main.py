@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from joblib import load
 from pandas import DataFrame, read_csv, concat
 from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
@@ -14,6 +15,12 @@ class Pred(BaseModel):
     id_user: int
     lat: float
     long: float
+
+
+class PredBatch(BaseModel):
+    id_user: List[int]
+    lat: List[float]
+    long: List[float]
 
 
 class Feedback(BaseModel):
@@ -83,7 +90,7 @@ def predict(pred_body: Pred):
 
 
 @app.post("/predict_batch")
-def predict_batch(pred_body: Pred):
+def predict_batch(pred_body: PredBatch):
     data = DataFrame([pred_body.dict()])
     model_data = preprocess(data.drop(columns=["id_user"]))
     pred = model.predict(model_data)
