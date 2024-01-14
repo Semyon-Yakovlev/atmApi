@@ -18,7 +18,7 @@ class Pred(BaseModel):
 
 
 class PredBatch(BaseModel):
-    id_user: List[int]
+    id_user: int
     lat: List[float]
     long: List[float]
 
