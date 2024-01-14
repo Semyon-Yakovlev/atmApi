@@ -86,14 +86,9 @@ def predict(pred_body: Pred):
 def predict_batch(pred_body: Pred):
     data = DataFrame([pred_body.dict()])
     model_data = preprocess(data.drop(columns=["id_user"]))
-    pred = model.predict(data)
+    pred = model.predict(model_data)
     data['prediction'] = pred
-    data_old = read_csv("predictions.csv")
-    data = concat([data_old, data], ignore_index=True)
-    data[["id_user", "lat", "long", "predict"]].to_csv(
-        "predictions.csv", index=False
-    )
-    return data[['lat', 'long', 'prediction']].to_dict()
+    return data[['lat', 'long', 'prediction']].to_dict(orient='list')
 
 
 @app.get("/history/{id}")
