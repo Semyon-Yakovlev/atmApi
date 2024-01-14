@@ -82,7 +82,7 @@ def predict(pred_body: Pred):
     return {"prediction": pred[0]}
 
 
-@app.post("/predict_items")
+@app.post("/predict_batch")
 def predict_batch(pred_body: Pred):
     data = DataFrame([pred_body.dict()])
     model_data = preprocess(data.drop(columns=["id_user"]))
