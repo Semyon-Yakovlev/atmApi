@@ -78,9 +78,9 @@ def predict(pred_body: Pred):
     pred = model.predict(data_model)
     new_row = {
         "id_user": pred_body.id_user,
-        "lat": data["lat"],
-        "long": data["long"],
-        "atm_group": data["atm_group"],
+        "lat": data["lat"].values[0],
+        "long": data["long"].values[0],
+        "atm_group": data["atm_group"].values[0],
         "prediction": pred[0],
     }
 
