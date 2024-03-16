@@ -10,7 +10,7 @@ from redis import StrictRedis
 from transform_data import transform_data
 
 app = FastAPI()
-redis_client = StrictRedis(host='redis', port=5370, db=0)
+redis_client = StrictRedis(host='red-cnr12420si5c73btdakg', port=6379, db=0)
 
 class Pred(BaseModel):
     id_user: int
