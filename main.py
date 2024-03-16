@@ -1,14 +1,16 @@
-from enum import Enum
 import pickle
+from enum import Enum
+from typing import List
+import json
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pandas import DataFrame, read_csv, concat
 from pydantic import BaseModel
-from typing import List
+from redis import StrictRedis
 from transform_data import transform_data
 
 app = FastAPI()
-
+redis_client = StrictRedis(host='redis', port=5370, db=0)
 
 class Pred(BaseModel):
     id_user: int
@@ -71,6 +73,10 @@ def methods(like: MethodsType):
 
 @app.post("/predict")
 def predict(pred_body: Pred):
+
+    predict_result = redis_client.get(str(pred_body))
+    if predict_result is not None:
+        return {"prediction": predict_result.decode()}
     data = DataFrame([pred_body.dict()])
     data_model = data.drop(columns=["id_user"])
     data_model = transform_data(data_model)
@@ -89,11 +95,17 @@ def predict(pred_body: Pred):
     data[["id_user", "lat", "long", "atm_group", "prediction"]].to_csv(
         "predictions.csv", index=False
     )
+    redis_client.set(str(pred_body), str(pred[0]))
     return {"prediction": str(pred[0])}
 
 
 @app.post("/predict_batch")
 def predict_batch(pred_body: PredBatch):
+
+    predict_batch_result = redis_client.get(str(pred_body))
+    if predict_batch_result is not None:
+        return json.loads(predict_batch_result)
+
     data = DataFrame(pred_body.dict())
     model_data = transform_data(data.drop(columns=["id_user"]))
     model_data = data_pipeline.transform(model_data)
@@ -105,13 +117,24 @@ def predict_batch(pred_body: PredBatch):
     new_data[["id_user", "atm_group", "lat", "long", "prediction"]].to_csv(
         "predictions.csv", index=False
     )
-    return data[['lat', 'long', 'atm_group', 'prediction']].to_dict(orient='records')
+
+    result = data[['lat', 'long', 'atm_group', 'prediction']].to_dict(orient='records')
+    redis_client.set(str(pred_body), json.dumps(result))
+    
+    return result
 
 
 @app.get("/history/{id_user}")
 def show_history(id_user: int):
+    history_result = redis_client.get(str(id_user))
+    if history_result is not None:
+        return json.loads(history_result)
+
     data = read_csv("predictions.csv")
-    return data[data["id_user"] == id_user].tail(20).to_dict(orient="records")
+    history = data[data["id_user"] == id_user].tail(20).to_dict(orient="records")
+
+    redis_client.set(str(id_user), json.dumps(history))
+    return history
 
 
 @app.post("/feedback")
